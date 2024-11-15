@@ -91,6 +91,7 @@ enum parser_f2_t {  // Built-in functions with two arguments
     PARSER_OR,
     PARSER_HEAVISIDE,
     PARSER_JN,
+    PARSER_YN,
     PARSER_MIN,
     PARSER_MAX,
     PARSER_FMOD
@@ -116,6 +117,7 @@ std::string_view parser_f2_s[] =
     "or",
     "heaviside",
     "jn",
+    "yn",
     "min",
     "max",
     "fmod"
@@ -349,24 +351,28 @@ AMREX_GPU_HOST_DEVICE AMREX_NO_INLINE
 T parser_math_atanh (T a) { return std::atanh(a); }
 
 template <typename T>
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-T parser_math_comp_ellint_1 (T k)
+AMREX_GPU_HOST_DEVICE AMREX_NO_INLINE
+T parser_math_comp_ellint_1 (T a)
 {
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__CUDA_ARCH__) && !defined(__NVCOMPILER)
-    return std::comp_ellint_1(k);
+    return std::comp_ellint_1(a);
 #else
-    return amrex::Math::comp_ellint_1<T>(k);
+    amrex::ignore_unused(a);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false, "parser: comp_ellint_1 only supported with gcc and cpu");
+    return 0.0;
 #endif
 }
 
 template <typename T>
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-T parser_math_comp_ellint_2 (T k)
+AMREX_GPU_HOST_DEVICE AMREX_NO_INLINE
+T parser_math_comp_ellint_2 (T a)
 {
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__CUDA_ARCH__) && !defined(__NVCOMPILER)
-    return std::comp_ellint_2(k);
+    return std::comp_ellint_2(a);
 #else
-    return amrex::Math::comp_ellint_2<T>(k);
+    amrex::ignore_unused(a);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false, "parser: comp_ellint_2 only supported with gcc and cpu");
+    return 0.0;
 #endif
 }
 
@@ -397,6 +403,21 @@ T parser_math_jn (int a, T b)
     return 0.0;
 #else
     return jn(a, b);
+#endif
+}
+
+template <typename T>
+AMREX_GPU_HOST_DEVICE AMREX_NO_INLINE
+T parser_math_yn (int a, T b)
+{
+#if defined AMREX_USE_SYCL || defined __MINGW32__
+    amrex::ignore_unused(a,b);
+    // neither yn(f) nor std::cyl_bessel_y work yet
+    // https://github.com/oneapi-src/oneAPI-spec/issues/308
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false, "parser: yn in SYCL not supported yet");
+    return 0.0;
+#else
+    return yn(a, b);
 #endif
 }
 
@@ -460,6 +481,8 @@ parser_call_f2 (enum parser_f2_t type, double a, double b)
         return (a < 0.0) ? 0.0 : ((a > 0.0) ? 1.0 : b);
     case PARSER_JN:
         return parser_math_jn<double>(int(a),b);
+    case PARSER_YN:
+        return parser_math_yn<double>(int(a),b);
     case PARSER_MIN:
         return (a < b) ? a : b;
     case PARSER_MAX:
