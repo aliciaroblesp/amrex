@@ -70,13 +70,14 @@ EXP	([Ee][-+]?[0-9]+)
 "pow"         { amrex_parserlval.f2 = amrex::PARSER_POW;       return F2; }
 "heaviside"   { amrex_parserlval.f2 = amrex::PARSER_HEAVISIDE; return F2; }
 "jn"          { amrex_parserlval.f2 = amrex::PARSER_JN;        return F2; }
+"yn"          { amrex_parserlval.f2 = amrex::PARSER_YN;        return F2; }
 "min"         { amrex_parserlval.f2 = amrex::PARSER_MIN;       return F2; }
 "max"         { amrex_parserlval.f2 = amrex::PARSER_MAX;       return F2; }
 "fmod"        { amrex_parserlval.f2 = amrex::PARSER_FMOD;      return F2; }
 "if"          { amrex_parserlval.f3 = amrex::PARSER_IF;        return F3; }
 
  /* We use SYMBOL to hold variables and constants */
-[a-zA-Z_][a-zA-Z0-9_\.]*  { amrex_parserlval.s = amrex::parser_makesymbol(amrex_parsertext); return SYMBOL; }
+[a-zA-Z_][a-zA-Z0-9_]*  { amrex_parserlval.s = amrex::parser_makesymbol(amrex_parsertext); return SYMBOL; }
 
  /* Number */
 [0-9]+"."[0-9]*{EXP}? |
